@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  urbackup:
+    image: uroni/urbackup-server:latest
+    restart: always
+    networks:
+      - caddy
+      - nextcloud
+    ports:
+      - 8002:55414
+    volumes:
+      - database:/var/urbackup
+      - backup:/backups
+    environment:
+      - TZ=Europe/Brussels
+      - PUID=${USER_ID}
+      - PGID=${GROUP_ID}
+    labels:
+      caddy: backup.lagae.info
+      caddy.reverse_proxy: "{{upstreams 80}}"
+
+networks:
+  caddy:
+    external: true
+  nextcloud:
+    internal: true
+
+volumes:
+  database:
+    driver_opts:
+      type: none
+      device: ${PROJECT_PATH}/data/urbackup/database
+      o: bind
+  backup:
+    driver_opts:
+      type: none
+      device: ${PROJECT_PATH}/data/urbackup/files
+      o: bind

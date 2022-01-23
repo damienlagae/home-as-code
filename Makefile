@@ -17,7 +17,7 @@ run: network proxy services ## Create network, start rev-proxy & services
 
 abort: services-down proxy-down network-rm ## Stop services, rev-proxy, remove network
 
-clean: proxy-clean nextcloud-clean ## Remove all volumes
+clean: proxy-clean nextcloud-clean urbackup-clean ## Remove all volumes
 
 ## —— Network 📡 ———————————————————————————————————————————————————————————————
 network: ## Create the network
@@ -36,8 +36,8 @@ proxy-clean: ## Remove the reverse proxy volume
 	$(DOCKER) volume rm caddy_data
 
 ## —— Services 🏗  ——————————————————————————————————————————————————————————————
-services: nextcloud-up ## Start the services
-services-down: nextcloud-down ## Stop the services
+services: nextcloud-up urbackup-up ## Start the services
+services-down: nextcloud-down urbackup-down ## Stop the services
 
 nextcloud-up: ## Start the nextcloud service
 	$(DC) -f ./services/nextcloud/docker-compose.yml up -d
@@ -50,3 +50,13 @@ nextcloud-clean: ## Remove the nextcloud volumes
 	$(DOCKER) volume rm nextcloud_config
 	$(DOCKER) volume rm nextcloud_files
 	$(DOCKER) volume rm nextcloud_apps
+
+urbackup-up: ## Start the urbackup service
+	$(DC) -f ./services/urbackup/docker-compose.yml up -d
+urbackup-down: ## Stop the urbackup service
+	$(DC) -f ./services/urbackup/docker-compose.yml down
+urbackup-logs: ## Show the urbackup service logs
+	$(DC) -f ./services/urbackup/docker-compose.yml logs
+urbackup-clean: ## Remove the urbackup volumes
+	$(DOCKER) volume rm urbackup_database
+	$(DOCKER) volume rm urbackup_backup
