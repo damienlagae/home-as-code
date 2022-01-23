@@ -1,0 +1,84 @@
+version: "3.7"
+
+services:
+  mariadb:
+    image: mariadb:latest
+    restart: always
+    networks:
+      - nextcloud
+    ports:
+      - 3306
+    volumes:
+      - db:/var/lib/mysql
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${NEXTCLOUD_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: ${NEXTCLOUD_DB_USER}
+      MYSQL_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
+
+  redis:
+    image: redis:latest
+    restart: always
+    networks:
+      - nextcloud
+    ports:
+      - 6379
+
+  nextcloud:
+    image: nextcloud:latest
+    restart: always
+    networks:
+      - caddy
+      - nextcloud
+    ports:
+      - 8001:80
+    depends_on:
+      - mariadb
+      - redis
+    volumes:
+      - files:/var/www/html/data
+      - config:/var/www/html/config
+      - apps:/var/www/html/apps
+    environment:
+      - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=${NEXTCLOUD_DB_USER}
+      - MYSQL_HOST=mariadb
+      - REDIS_HOST=redis
+      - TRUSTED_PROXIES=10.18.0.0/24 # this is the IP range of my caddy network
+      - APACHE_DISABLE_REWRITE_IP=1
+    labels:
+      caddy: nextcloud.lagae.info
+      caddy.reverse_proxy: "{{upstreams 80}}"
+      caddy.0_redir: "/.well-known/carddav /remote.php/dav 301"
+      caddy.1_redir: "/.well-known/caldav /remote.php/dav 301"
+      caddy.header: "Strict-Transport-Security max-age=15552000"
+
+networks:
+  caddy:
+    external: true
+  nextcloud:
+    internal: true
+
+volumes:
+  db:
+    driver_opts:
+      type: none
+      device: ${PROJECT_PATH}/data/nextcloud/db
+      o: bind
+  files:
+    driver_opts:
+      type: none
+      device: ${PROJECT_PATH}/data/nextcloud/files
+      o: bind
+  config:
+    driver_opts:
+      type: none
+      device: ${PROJECT_PATH}/data/nextcloud/config
+      o: bind
+  apps:
+    driver_opts:
+      type: none
+      device: ${PROJECT_PATH}/data/nextcloud/apps
+      o: bind
