@@ -35,5 +35,5 @@ volumes:
   backup:
     driver_opts:
       type: none
-      device: ${PROJECT_PATH}/data/urbackup/files
+      device: /backups
       o: bind
