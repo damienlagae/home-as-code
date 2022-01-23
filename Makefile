@@ -12,7 +12,7 @@ DC            = USER_ID=$(USER) GROUP_ID=$(GROUP) docker-compose $(DC_ARGS)
 help: ## Outputs this help screen
 	@grep -E '(^[a-zA-Z0-9_-]+:.*?##.*$$)|(^##)' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}{printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
 
-## —— Project 🛠 ———————————————————————————————————————————————————————————————
+## —— Project 🛠  ———————————————————————————————————————————————————————————————
 run: network proxy services ## Create network, start rev-proxy & services
 
 abort: services-down proxy-down network-rm ## Stop services, rev-proxy, remove network
@@ -25,15 +25,17 @@ network: ## Create the network
 network-rm: ## Remove the network
 	$(DOCKER) network rm caddy
 
-## —— Proxy 🛡 ————————————————————————————————————————————————————————————————
+## —— Proxy 🛡   ————————————————————————————————————————————————————————————————
 proxy: ## Start the reverse proxy
 	$(DC) -f ./caddy/docker-compose.yml up -d
 proxy-down: ## Stop the reverse proxy
 	$(DC) -f ./caddy/docker-compose.yml down
+proxy-logs: ## Show the reverse proxy logs
+	$(DC) -f ./caddy/docker-compose.yml logs
 proxy-clean: ## Remove the reverse proxy volume
 	$(DOCKER) volume rm caddy_data
 
-## —— Services 🏗 ——————————————————————————————————————————————————————————————
+## —— Services 🏗  ——————————————————————————————————————————————————————————————
 services: nextcloud-up ## Start the services
 services-down: nextcloud-down ## Stop the services
 
